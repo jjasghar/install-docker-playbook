@@ -1,0 +1,56 @@
+---
+- name: Install docker community edition
+  hosts: all
+
+  tasks:
+    - name: Fetch the variables from var file
+      include_vars:
+        file: ../vars/main.yml
+
+    - name: update the cache and verify deps are installed
+      apt:
+        name:
+          - apt-transport-https 
+          - ca-certificates
+          - curl 
+          - gnupg-agent 
+          - software-properties-common 
+        state: latest
+        update_cache: yes
+
+    - name: add the docker key
+      apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+        id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+
+    - name: add the apt repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/debian buster stable
+        state: present
+        mode: '0644'
+
+    - name: update the cache and install docker-ce and stuff
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+        update_cache: yes
+
+    - name: sanity check that docker is running
+      shell:
+        cmd: docker run hello-world
+
+    - name: added admini to the docker group
+      user:
+        name: admini
+        groups: docker
+
+    - name: start up docker and enable
+      service:
+        name: docker 
+        state: restarted
+        enabled: yes
